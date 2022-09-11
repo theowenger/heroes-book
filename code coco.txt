@@ -1,0 +1,175 @@
+
+
+class GameManager {
+    constructor(scenes) {
+        this.scenes = scenes
+        this.currentScene = scenes[0]
+        this.gameContainer = null
+    }
+
+    /**
+     * Load the game into given selector
+     * @param {string} selector 
+     */
+    loadGame(selector) {
+        this.gameContainer = document.getElementById(selector)
+
+        this.reloadScene()
+    }
+
+    description(newDescription) {
+        document.getElementById("textAdd").innerText = newDescription
+    }
+
+    reloadScene() {
+        // Delete current scene
+        this.gameContainer.innerHTML = ""
+
+        // Load new scene
+        this.gameContainer.innerHTML = `<div class="description__title">
+        <h2 id="tittleAdd"></h2>
+    </div>
+
+    <div class="container__image" id="imgAdd">
+        
+    </div>
+
+    <div class="description__text">
+        <h2 id="textAdd"></h2>
+    </div>
+
+    <div class="container__answer" id="addChoices">
+        
+    </div>`
+
+        const currentScene = this.currentScene
+        // Load props
+        document.getElementById("tittleAdd").innerText = currentScene.title
+        this.description(currentScene.description)
+        
+        // Display buttons into the DOM
+        const choicesContainer = document.getElementById('addChoices')
+        for (const i in currentScene.choices) {
+            const choice = currentScene.choices[i]
+            const btn = `<div class="choice-1"><button class="btn-choice btn-choice-1" id="choice-${i}">${choice.value}</button></div>`
+
+            choicesContainer.innerHTML += btn;
+        }
+
+        // Add event listener of each button
+        const self = this
+        for (const i in currentScene.choices) {
+            const choice = currentScene.choices[i]
+            const btnElement = document.getElementById(`choice-${i}`)
+
+            // Add event listener on button
+            btnElement.addEventListener('click', function () {
+                if (typeof choice.goTo === 'function') {
+                    // If the goTo property is a function, execute it
+                    choice.goTo(self);
+                } else {
+                    // If the goTo property is not a function, goTo by name
+                    self.goTo(choice.goTo)
+                }
+            });
+        }
+    }
+
+    /**
+     * Load a scene by name
+     * @param {string} sceneName 
+     */
+    goTo(sceneName) {
+        // Find the scene that match name
+        let foundScene = null
+        for (const scene of this.scenes) {
+            if (scene.name === sceneName) {
+                foundScene = scene
+            }
+        }
+
+        if (foundScene === null) {
+            console.error(`No scene found for name=${sceneName}`)
+            return
+        }
+
+        // Load the new scene
+        this.currentScene = foundScene
+        this.reloadScene()
+    }
+}
+
+class Inventory {}
+
+class Item {}
+
+class Scene {}
+
+class Choice {}
+
+let storyBook = {
+    page1: "kidRoom",
+    page2: "nightmare",
+    page3: "corridor",
+    page4: "parentRoom",
+    page5: "livingRoom",
+    page6: "kitchen",
+    page7: "bathRoom",
+    page8: "cave",
+
+};
+
+const scenes = [
+    {
+        title: "La chambre",
+        name: 'kidroom',
+        description: "La chambre de l'enfant, fait de beaux reves ...",
+        image: "https://...",
+        choices: [
+            {
+                value: "Aller à l'étage",
+                goTo: "corridor",
+                shouldDisplay: true,
+            },
+            {
+                value: "Je me rendors",
+                goTo: "nightmare",
+                shouldDisplay: true
+            },
+            {
+                value: "Je fouille la chambre",
+                goTo: function(gameManager) {
+                    gameManager.description("La chambre est vide")
+                },
+                shouldDisplay: true
+            },
+            {
+                value: "J'ouvre le coffre",
+                goTo: function(gameManager) {
+                    gameManager.description("Vous ne possédez pas la clef")
+
+                },
+                shouldDisplay: function () {
+                    return gameManager.hasItem("chest_key_kidroom")
+                }
+            }
+        ]
+    },
+    {
+        title: "Corridor",
+        name: 'corridor',
+        description: "Ca n'a rien a voir avec la corrida frerot",
+        image: "https://...",
+        choices: [
+            {
+                value: "Retourner dans la chambre",
+                goTo: "kidroom",
+                shouldDisplay: true,
+            },
+        ]
+    }
+]
+
+const gameManager = new GameManager(scenes)
+
+gameManager.loadGame("game-container")
